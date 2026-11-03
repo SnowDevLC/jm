@@ -75,7 +75,7 @@ export async function createPricesList(values: PricesListFormType) {
         (product) => product.costReferenceCurrency === "USD" || product.costReferenceCurrency === "BOTH",
       );
 
-      const exchangeRate = settings?.exchangeRateType.rates[0]?.rate;
+      const exchangeRate = settings?.exchangeRateType?.rates[0]?.rate;
 
       if (needsExchangeRate && !exchangeRate) {
         throw new Error("No existe una cotización para el tipo de cambio configurado en el sistema");
@@ -313,7 +313,7 @@ export async function updatePricesList(id: string, values: PricesListFormType) {
         (product) => product.costReferenceCurrency === "USD" || product.costReferenceCurrency === "BOTH",
       );
 
-      const exchangeRate = settings?.exchangeRateType.rates[0]?.rate;
+      const exchangeRate = settings?.exchangeRateType?.rates[0]?.rate;
 
       if (needsExchangeRate && !exchangeRate) {
         throw new Error("No existe una cotización para el tipo de cambio configurado en el sistema");
