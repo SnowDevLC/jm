@@ -1,0 +1,769 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum IvaCompany {
+  NC
+  MT
+  RI
+}
+
+model SystemSettings {
+  id                 String            @id @default(cuid())
+  name               String
+  cuit               String
+  address            String
+  pointWebService    Int               @default(0)
+  ivaCondition       IvaCompany        @default(NC)
+  startActivity      DateTime          @default(now())
+  priceRounding      Decimal           @default(0) @db.Decimal(14, 2)
+  marginDefault      Decimal           @default(0) @db.Decimal(8, 2)
+  exchangeRateTypeId String?           @unique
+  exchangeRateType   ExchangeRateType? @relation(fields: [exchangeRateTypeId], references: [id])
+  priceListTNId      String?           @unique
+  priceListTN        PriceList?        @relation(fields: [priceListTNId], references: [id])
+
+  @@map("system_settings")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  orders               Order[]
+  invoices             Invoice[]
+  creditNotes          CreditNote[]
+  productModifications ProductModification[]
+  devolutions          Devolution[]
+  payments             Payment[]
+  cashMovements        CashMovement[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+model Deposit {
+  id   String @id @default(cuid())
+  name String @unique
+
+  stores         Store[]
+  stock          ProductStock[]
+  stockMovements StockMovement[]
+
+  @@map("deposits")
+}
+
+model Store {
+  id        String  @id @default(cuid())
+  name      String  @unique
+  address   String? @default("-")
+  phone     String? @default("-")
+  pointArca Int?    @default(0)
+  balance   Decimal @default(0) @db.Decimal(14, 2)
+
+  depositId String
+  deposit   Deposit @relation(fields: [depositId], references: [id])
+
+  user            User[]
+  cashMovements   CashMovement[]
+  cashboxBalances CashboxBalance[]
+
+  @@map("stores")
+}
+
+enum ClientIva {
+  SIN_CATEGORIA
+  EXENTO
+  MONOTRIBUTO
+  RESPONSABLE_INSCRIPTO
+  CONSUMIDOR_FINAL
+}
+
+model Client {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @default("-")
+  phone       String    @default("-")
+  balance     Decimal   @default(0) @db.Decimal(14, 2)
+  cuit        String?
+  companyName String    @default("-")
+  IVAcategory ClientIva @default(SIN_CATEGORIA)
+  address     String    @default("-")
+
+  priceListId String?
+  priceList   PriceList? @relation(fields: [priceListId], references: [id])
+
+  orders      Order[]
+  devolutions Devolution[]
+  payments    Payment[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("partners")
+}
+
+model Brand {
+  id   String @id @default(cuid())
+  name String @unique
+
+  products Product[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("brands")
+}
+
+model Category {
+  id   String @id @default(cuid())
+  name String @unique
+
+  parentId String?
+  parent   Category?  @relation("ParentCategory", fields: [parentId], references: [id])
+  children Category[] @relation("ParentCategory")
+
+  products Product[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("categories")
+}
+
+enum ParameterType {
+  PERCENTAGE
+  FIXED
+  FACTOR
+}
+
+enum ParameterBase {
+  COST
+  PRICE
+}
+
+model Parameter {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  type        ParameterType
+  base        ParameterBase
+  value       Decimal       @db.Decimal(14, 6)
+  isActive    Boolean       @default(true)
+
+  priceLists PriceListParameter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("parameters")
+}
+
+enum PriceListAdjustmentType {
+  BASE
+  DERIVED
+  PERCENTAGE
+  FIXED
+}
+
+model PriceList {
+  id          String                  @id @default(cuid())
+  name        String
+  description String                  @default("-")
+  isActive    Boolean                 @default(true)
+  isDefault   Boolean                 @default(false)
+  marginType  PriceListAdjustmentType @default(DERIVED)
+  marginValue Decimal                 @default(0) @db.Decimal(14, 2)
+
+  products      PriceListProduct[]
+  clients       Client[]
+  parameters    PriceListParameter[]
+  marginRules   PriceListMarginRule[]
+  systemSetting SystemSettings?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("price_lists")
+}
+
+model PriceListMarginRule {
+  id String @id @default(cuid())
+
+  minBaseMargin Decimal @db.Decimal(14, 6)
+  coefficient   Decimal @db.Decimal(14, 6)
+
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([priceListId, minBaseMargin])
+  @@map("price_lists_margin_rules")
+}
+
+enum PriceListProductMode {
+  AUTOMATIC
+  MANUAL
+}
+
+model PriceListProduct {
+  id String @id @default(cuid())
+
+  price       Decimal              @db.Decimal(14, 2)
+  marginValue Decimal              @default(0) @db.Decimal(8, 2)
+  mode        PriceListProductMode @default(AUTOMATIC)
+
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([priceListId, productId])
+  @@index([productId])
+  @@map("price_lists_products")
+}
+
+model PriceListParameter {
+  id String @id @default(cuid())
+
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+
+  parameterId String
+  parameter   Parameter @relation(fields: [parameterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([priceListId, parameterId])
+  @@index([parameterId])
+  @@map("price_lists_parameters")
+}
+
+enum ExchangeRateSource {
+  AUTOMATIC
+  MANUAL
+}
+
+model ExchangeRateType {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  source      ExchangeRateSource @default(MANUAL)
+  provider    String?
+  updateEvery Int?
+
+  rates ExchangeRate[]
+
+  systemSetting SystemSettings?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("exchange_rates_types")
+}
+
+model ExchangeRate {
+  id   String   @id @default(cuid())
+  rate Decimal  @db.Decimal(14, 4)
+  date DateTime @default(now())
+
+  typeId String
+  type   ExchangeRateType @relation(fields: [typeId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([typeId, date])
+  @@map("exchange_rates")
+}
+
+enum CostReferenceCurrency {
+  ARG
+  USD
+  BOTH
+}
+
+model Product {
+  id                    String                @id @default(cuid())
+  SKU                   String                @unique
+  barcode               String?
+  img                   String?               @default("https://onlineschool.academlo.com/no-image-2.jpg")
+  name                  String                @unique
+  cost                  Decimal               @db.Decimal(14, 2)
+  costUSD               Decimal               @db.Decimal(14, 4)
+  costBonus             Decimal               @default(0) @db.Decimal(14, 4)
+  costLogistics         Decimal               @default(0) @db.Decimal(14, 4)
+  costDate              DateTime              @default(now())
+  ivaIncluded           Decimal               @default(0) @db.Decimal(14, 4)
+  ivaApplied            Decimal               @default(0) @db.Decimal(14, 4)
+  discount              Boolean               @default(false)
+  isActive              Boolean               @default(true)
+  isActiveShop          Boolean               @default(false)
+  updatedBy             String
+  totalStock            Int                   @default(0)
+  costReferenceCurrency CostReferenceCurrency
+
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id])
+
+  priceLists            PriceListProduct[]
+  categories            Category[]
+  orders                ProductOrder[]
+  stock                 ProductStock[]
+  stockMovements        StockMovementProduct[]
+  devolutions           DevolutionItem[]
+  productsModifications ProductModification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@map("products")
+}
+
+enum OrderStatus {
+  ENTREGADA
+  PENDIENTE
+  CANCELADA
+}
+
+enum OrderPaymentStatus {
+  PAGADA
+  PENDIENTE
+  PARCIAL
+  CANCELADA
+}
+
+model Order {
+  id            String             @id @default(cuid())
+  number        Int                @unique
+  date          DateTime           @default(now())
+  total         Decimal            @db.Decimal(14, 2)
+  paymentStatus OrderPaymentStatus
+  status        OrderStatus
+  unpaidBalance Decimal            @default(0) @db.Decimal(14, 2)
+  observations  String?            @default("-")
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  products     ProductOrder[]
+  applications Application[]
+  devolutions  Devolution[]
+  invoices     Invoice[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("orders")
+}
+
+model ProductOrder {
+  id       String  @id @default(cuid())
+  name     String
+  quantity Decimal @db.Decimal(14, 3)
+  price    Decimal @db.Decimal(14, 2)
+  discount Decimal @default(0) @db.Decimal(14, 2)
+  subtotal Decimal @db.Decimal(14, 2)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+
+  @@unique([productId, orderId])
+  @@map("products_orders")
+}
+
+model ProductStock {
+  id        String  @id @default(cuid())
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  deposit   Deposit @relation(fields: [depositId], references: [id])
+  depositId String
+  quantity  Decimal @db.Decimal(14, 3)
+
+  @@unique([productId, depositId])
+  @@map("product_stocks")
+}
+
+model StockMovement {
+  id             String                 @id @default(cuid())
+  deposit        Deposit                @relation(fields: [depositId], references: [id])
+  depositId      String
+  relatedDeposit String
+  type           String
+  date           DateTime               @default(now())
+  products       StockMovementProduct[]
+
+  @@map("stock_movements")
+}
+
+model StockMovementProduct {
+  id              String        @id @default(cuid())
+  stockMovement   StockMovement @relation(fields: [stockMovementId], references: [id])
+  stockMovementId String
+  product         Product       @relation(fields: [productId], references: [id])
+  productId       String
+  quantity        Decimal       @db.Decimal(14, 3)
+
+  @@map("stock_movements_products")
+}
+
+model Devolution {
+  id        String   @id @default(cuid())
+  number    Int      @unique
+  date      DateTime @default(now())
+  reason    String
+  total     Decimal  @db.Decimal(14, 2)
+  remaining Decimal  @db.Decimal(14, 2)
+
+  originalOrder   Order            @relation(fields: [originalOrderId], references: [id])
+  originalOrderId String
+  clientId        String
+  client          Client           @relation(fields: [clientId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  userId          String
+  items           DevolutionItem[]
+  applications    Application[]
+
+  createdAt DateTime @default(now())
+
+  @@map("devolutions")
+}
+
+model DevolutionItem {
+  id           String     @id @default(cuid())
+  devolution   Devolution @relation(fields: [devolutionId], references: [id], onDelete: Cascade)
+  devolutionId String
+  product      Product    @relation(fields: [productId], references: [id])
+  productId    String
+  quantity     Decimal    @db.Decimal(14, 3)
+  price        Decimal    @db.Decimal(14, 2)
+
+  @@map("devolutions_items")
+}
+
+model ProductModification {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  diff        Json
+  observation String?  @default("-")
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@map("products_modifications")
+}
+
+model Cashbox {
+  id      String  @id @default(cuid())
+  name    String  @unique
+  balance Decimal @default(0) @db.Decimal(14, 2)
+
+  paymentMethods  PaymentMethod[]
+  cashMovements   CashMovement[]
+  cashboxBalances CashboxBalance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cashboxes")
+}
+
+model CashboxBalance {
+  id      String  @id @default(cuid())
+  balance Decimal @default(0) @db.Decimal(14, 2)
+
+  cashboxId String
+  cashbox   Cashbox @relation(fields: [cashboxId], references: [id])
+  storeId   String
+  store     Store   @relation(fields: [storeId], references: [id])
+
+  @@unique([cashboxId, storeId])
+  @@map("cashboxes_balances")
+}
+
+enum CashMovementType {
+  ENTRADA
+  SALIDA
+}
+
+model CashMovement {
+  id          String           @id @default(cuid())
+  number      Int              @unique
+  type        CashMovementType
+  date        DateTime         @default(now())
+  amount      Decimal          @db.Decimal(14, 2)
+  description String
+
+  cashboxId    String
+  cashbox      Cashbox @relation(fields: [cashboxId], references: [id])
+  storeId      String
+  store        Store   @relation(fields: [storeId], references: [id])
+  userId       String
+  user         User    @relation(fields: [userId], references: [id])
+  paymentId    String?
+  devolutionId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([storeId])
+  @@map("cash_movements")
+}
+
+model PaymentMethod {
+  id   String @id @default(cuid())
+  name String @unique
+
+  cashboxId    String
+  cashbox      Cashbox       @relation(fields: [cashboxId], references: [id])
+  paymentLines PaymentLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payments_methods")
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  number    Int      @unique
+  date      DateTime @default(now())
+  total     Decimal  @db.Decimal(14, 2)
+  remaining Decimal  @default(0.0) @db.Decimal(14, 2)
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  lines        PaymentLine[]
+  applications Application[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("payments")
+}
+
+model PaymentLine {
+  id        String  @id @default(cuid())
+  amount    Decimal @db.Decimal(14, 2)
+  reference String? @default("")
+
+  paymentMethodId String
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  paymentId       String
+  payment         Payment       @relation(fields: [paymentId], references: [id])
+
+  @@index([paymentId])
+  @@index([paymentMethodId])
+  @@map("payments_lines")
+}
+
+enum ApplicationSource {
+  PAYMENT
+  DEVOLUTION
+}
+
+model Application {
+  id            String            @id @default(cuid())
+  appliedAmount Decimal           @db.Decimal(14, 2)
+  source        ApplicationSource
+
+  orderId      String?
+  order        Order?      @relation(fields: [orderId], references: [id])
+  devolution   Devolution? @relation(fields: [devolutionId], references: [id])
+  devolutionId String?
+  payment      Payment?    @relation(fields: [paymentId], references: [id])
+  paymentId    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([devolutionId])
+  @@map("applications")
+}
+
+model ArcaTicket {
+  id        Int      @id @default(autoincrement())
+  service   String   @unique
+  data      Json
+  updatedAt DateTime @updatedAt
+
+  @@map("arca_tickets")
+}
+
+model ArcaNumerador {
+  id              Int @id @default(autoincrement())
+  pointWebService Int
+  type            Int
+  last            Int
+
+  @@unique([pointWebService, type])
+  @@map("arca_numeradores")
+}
+
+model Invoice {
+  id                   String     @id @default(cuid())
+  type                 Int
+  pointOfSale          Int
+  number               Int
+  numberSearch         String     @default("")
+  cae                  String
+  caeExpiration        String
+  total                Decimal    @db.Decimal(14, 2)
+  net                  Decimal    @db.Decimal(14, 2)
+  iva                  Decimal    @db.Decimal(14, 2)
+  companyName          String
+  companyCuit          String
+  companyIva           IvaCompany
+  companyAddress       String
+  companyStartActivity DateTime
+  clientName           String
+  clientCuit           String
+  clientIva            ClientIva
+  clientAddress        String
+  arcaResponse         Json?
+  qrPayload            Json?
+  status               String     @default("APPROVED")
+
+  orderId     String        @unique
+  order       Order         @relation(fields: [orderId], references: [id])
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id])
+  items       InvoiceItem[]
+  creditNotes CreditNote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, pointOfSale, number])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  SKU         String
+  description String
+  quantity    Decimal @db.Decimal(14, 3)
+  unit        String
+  price       Decimal @db.Decimal(14, 2)
+  subtotal    Decimal @db.Decimal(14, 2)
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
+  @@map("invoices_items")
+}
+
+model CreditNote {
+  id                   String     @id @default(cuid())
+  type                 Int
+  pointOfSale          Int
+  number               Int
+  numberSearch         String     @default("")
+  cae                  String
+  caeExpiration        String
+  total                Decimal    @db.Decimal(14, 2)
+  net                  Decimal    @db.Decimal(14, 2)
+  iva                  Decimal    @db.Decimal(14, 2)
+  companyName          String
+  companyCuit          String
+  companyIva           IvaCompany
+  companyAddress       String
+  companyStartActivity DateTime
+  clientName           String
+  clientCuit           String
+  clientIva            ClientIva
+  clientAddress        String
+  arcaResponse         Json?
+  qrPayload            Json?
+  status               String     @default("APPROVED")
+  reason               String
+
+  associatedType        Int
+  associatedPointOfSale Int
+  associatedNumber      Int
+
+  invoiceId String
+  invoice   Invoice          @relation(fields: [invoiceId], references: [id])
+  userId    String?
+  user      User?            @relation(fields: [userId], references: [id])
+  items     CreditNoteItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, pointOfSale, number])
+  @@index([invoiceId])
+  @@map("credit_notes")
+}
+
+model CreditNoteItem {
+  id          String  @id @default(cuid())
+  SKU         String
+  description String
+  quantity    Decimal @db.Decimal(14, 3)
+  unit        String
+  price       Decimal @db.Decimal(14, 2)
+  subtotal    Decimal @db.Decimal(14, 2)
+
+  creditNoteId String
+  creditNote   CreditNote @relation(fields: [creditNoteId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([creditNoteId])
+  @@map("credit_notes_items")
+}
+
+model Counter {
+  id   String @id @default(cuid())
+  type String @unique
+  next Int
+
+  @@map("counters")
+}
