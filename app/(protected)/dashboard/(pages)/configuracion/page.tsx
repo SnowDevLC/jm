@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col">
       <HeaderConfig />
-      <div className="flex flex-col p-4 gap-4">
+      <div className="flex flex-col p-2 gap-4">
         <ListExchangeRatesTypes exchangeRateTypes={exchangeRateTypes} />
         <Separator />
         <FormSystemSettings systemSettings={systemSettings} exchangeRateType={exchangeRateTypes}/>

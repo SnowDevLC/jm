@@ -10,7 +10,7 @@ export default function ListProductsByPricesList(props: ListProductsByPricesList
   const columns = createColumns(priceLists);
 
   return (
-    <div className="rounded-lg bg-background shadow-md hover:shadow-lg p-2 h-mi">
+    <div className="p-2">
       <DataTable data={products} columns={columns} searchName searchSKU />
     </div>
   );

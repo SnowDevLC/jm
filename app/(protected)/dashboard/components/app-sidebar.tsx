@@ -33,7 +33,7 @@ import {
   Truck,
   Warehouse,
   Tags,
-  Shapes
+  Shapes,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ import SidebarHandle from "./sidebar-handle";
 import { NavUser } from "./nav-user";
 import { Session } from "next-auth";
 import { useTheme } from "next-themes";
+import MobileSidebarHandle from "./mobile-sidebar-handle";
 
 type Role = "ADMIN" | "SUPERADMIN" | "USER";
 
@@ -132,74 +133,80 @@ export function AppSidebar({ session }: { session: Session }) {
   const filteredMenu = filterMenu(menu, role);
 
   return (
-    <Sidebar collapsible="icon" className="group/sidebar transition-all duration-300 border-sidebar-border">
-      <SidebarHandle />
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-20 group-data-[collapsible=icon]:p-0!"
-              render={<Link href="/dashboard" />}
-            >
-              <img src="/JM-logo.png" className="h-14 group-data-[collapsible=icon]:h-8" />
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-bold">JM</span>
-                <span className="truncate text-xs text-muted-foreground">Sistema de gestión</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarGroup className="py-0 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
-        <div className="flex items-center border rounded-lg bg-card p-1 group-data-[collapsible=icon]:hidden">
-          <Search strokeWidth={1} />
-          <input
-            placeholder="Buscar ..."
-            value={inputNumber}
-            onChange={(e) => setInputNumber(e.target.value)}
-            className="bg-transparent w-full outline-none pl-2 text-sm"
-          />
-          <div className="h-5 w-5 flex items-center justify-center border p-3 rounded-sm">
+    <>
+      <Sidebar collapsible="icon" className="group/sidebar transition-all duration-300 border-sidebar-border">
+        <SidebarHandle />
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-20 group-data-[collapsible=icon]:p-0!"
+                render={<Link href="/dashboard" />}
+              >
+                <img src="/JM-logo.png" className="h-14 group-data-[collapsible=icon]:h-8" />
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-bold">JM</span>
+                  <span className="truncate text-xs text-muted-foreground">Sistema de gestión</span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarGroup className="py-0 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center">
+          <div className="flex items-center border rounded-lg bg-card p-1 group-data-[collapsible=icon]:hidden">
+            <Search strokeWidth={1} />
+            <input
+              placeholder="Buscar ..."
+              value={inputNumber}
+              onChange={(e) => setInputNumber(e.target.value)}
+              className="bg-transparent w-full outline-none pl-2 text-sm"
+            />
+            <div className="h-5 w-5 flex items-center justify-center border p-3 rounded-sm">
+              <span className="text-xs pointer-events-none">F</span>
+            </div>
+          </div>
+          <div className="h-5 w-5 items-center justify-center border p-3 rounded-sm mb-2 hidden group-data-[collapsible=icon]:flex">
             <span className="text-xs pointer-events-none">F</span>
           </div>
-        </div>
-        <div className="h-5 w-5 items-center justify-center border p-3 rounded-sm mb-2 hidden group-data-[collapsible=icon]:flex">
-          <span className="text-xs pointer-events-none">F</span>
-        </div>
-      </SidebarGroup>
-      <SidebarContent className="mt-2">
-        {filteredMenu.map((menu, index) => {
-          return (
-            <SidebarGroup className="py-0 group-data-[collapsible=icon]:items-center" key={index}>
-              <SidebarGroupLabel className="uppercase">{menu.title}</SidebarGroupLabel>
+        </SidebarGroup>
+        <SidebarContent className="mt-2">
+          {filteredMenu.map((menu, index) => {
+            return (
+              <SidebarGroup className="py-0 group-data-[collapsible=icon]:items-center" key={index}>
+                <SidebarGroupLabel className="uppercase">{menu.title}</SidebarGroupLabel>
 
-              <div className="ml-2 pl-3 border-l border-sidebar-border group-data-[collapsible=icon]:border-l-0 group-data-[collapsible=icon]:ml-0 group-data-[collapsible=icon]:pl-0">
-                <SidebarMenu>
-                  {menu.items.map((submenu) => {
-                    const Icon = submenu.icon;
-                    const active =
-                      submenu.href === "/dashboard" ? pathname === submenu.href : pathname.startsWith(submenu.href);
+                <div className="ml-2 pl-3 border-l border-sidebar-border group-data-[collapsible=icon]:border-l-0 group-data-[collapsible=icon]:ml-0 group-data-[collapsible=icon]:pl-0">
+                  <SidebarMenu>
+                    {menu.items.map((submenu) => {
+                      const Icon = submenu.icon;
+                      const active =
+                        submenu.href === "/dashboard" ? pathname === submenu.href : pathname.startsWith(submenu.href);
 
-                    return (
-                      <SidebarMenuItem key={submenu.name}>
-                        <SidebarMenuButton isActive={active} render={<Link href={submenu.href} className="relative" />}>
-                          {active && <span className="absolute left-0 top-0 h-full w-1 bg-primary" />}
-                          <Icon />
-                          <span>{submenu.name}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </div>
-            </SidebarGroup>
-          );
-        })}
-      </SidebarContent>
+                      return (
+                        <SidebarMenuItem key={submenu.name}>
+                          <SidebarMenuButton
+                            isActive={active}
+                            render={<Link href={submenu.href} className="relative" />}
+                          >
+                            {active && <span className="absolute left-0 top-0 h-full w-1 bg-primary" />}
+                            <Icon />
+                            <span>{submenu.name}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </div>
+              </SidebarGroup>
+            );
+          })}
+        </SidebarContent>
 
-      <SidebarFooter>
-        <NavUser session={session} />
-      </SidebarFooter>
-    </Sidebar>
+        <SidebarFooter>
+          <NavUser session={session} />
+        </SidebarFooter>
+      </Sidebar>
+      <MobileSidebarHandle />
+    </>
   );
 }

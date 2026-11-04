@@ -5,7 +5,7 @@ import { ClientType } from "../lib/zodClients";
 export async function ListClients({clients}:{clients: ClientType[]}) {
 
   return (
-    <div className="p-4">
+    <div className="p-2">
       <DataTable data={clients} columns={columns} searchName />
     </div>
   );

@@ -34,7 +34,7 @@ export async function ListProducts(props: ListProductsProps) {
 
   return (
     <SessionProvider>
-      <div className="rounded-lg bg-background shadow-md hover:shadow-lg p-2 h-min">
+      <div className="p-2">
         {session?.user.role === "ADMIN" || session?.user.role === "SUPERADMIN" ? (
           <DataTable
             data={products}

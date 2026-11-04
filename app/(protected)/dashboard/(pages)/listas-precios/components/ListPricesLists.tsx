@@ -8,7 +8,7 @@ export default function ListPricesList(props: ListPricesListProps) {
   const { pricesList } = props;
 
   return (
-    <div className="rounded-lg bg-background shadow-md hover:shadow-lg p-2 h-min">
+    <div className="p-2">
       <DataTable data={pricesList} columns={columns} searchName pagination={false} toolbar={false} />
     </div>
   );
