@@ -146,3 +146,58 @@
 .animate-bounce-soft {
   animation: bounceSoft 1s ease-in-out infinite;
 }
+
+.sx-react-calendar-wrapper {
+  width: 100% !important;
+  height: calc(100dvh - 72px) !important;
+  max-height: none !important;
+  min-height: 0;
+}
+
+/* PPF */
+.sx__event.turn-ppf {
+  background-color: #9333ea !important;
+  border-color: #9333ea !important;
+  color: white !important;
+}
+
+/* Polarizado */
+.sx__event.turn-polarizado {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: white !important;
+}
+
+/* Tratamiento */
+.sx__event.turn-tratamiento {
+  background-color: #16a34a !important;
+  border-color: #16a34a !important;
+  color: white !important;
+}
+
+/* Otros */
+.sx__event.turn-otros {
+  background-color: #64748b !important;
+  border-color: #64748b !important;
+  color: white !important;
+}
+
+.sx-react-calendar-wrapper {
+  position: relative;
+  z-index: 0;
+}
+
+/* Los diálogos deben quedar por encima */
+[data-slot="dialog-overlay"] {
+  z-index: 50;
+}
+
+[data-slot="dialog-content"] {
+  z-index: 50;
+}
+
+[data-sonner-toaster] {
+  z-index: 200 !important;
+}
+
+

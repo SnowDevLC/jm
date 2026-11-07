@@ -34,6 +34,7 @@ import {
   Warehouse,
   Tags,
   Shapes,
+  CalendarDays
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ const menu: MenuSection[] = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "SUPERADMIN", "USER"] },
       // { name: "Facturación", href: "/dashboard/vender", icon: ShoppingCart, roles: ["ADMIN", "SUPERADMIN", "USER"] },
       // { name: "Gastos", href: "/dashboard/gastos", icon: Banknote, roles: ["ADMIN", "SUPERADMIN", "USER"] },
+      { name: "Turnos", href: "/dashboard/turnos", icon: CalendarDays, roles: ["ADMIN", "SUPERADMIN", "USER"] },
       { name: "Clientes", href: "/dashboard/clientes", icon: BookUser, roles: ["ADMIN", "SUPERADMIN", "USER"] },
     ],
   },

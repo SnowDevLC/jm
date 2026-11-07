@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 
 export default function FormClient(props: FormClientProps) {
-  const { setOpenModalMenu, setOpenModalForm, client, viewModifyButton = false } = props;
+  const { setOpenModalMenu, setOpenModalForm, onClientCreated, client, viewModifyButton = false } = props;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModify, setIsModify] = useState(false);
   const [priceLists, setPriceLists] = useState<PricesListType[]>([]);
@@ -74,8 +74,8 @@ export default function FormClient(props: FormClientProps) {
     if (client) {
       await onSubmitUpdate(values);
     } else {
-      const { success } = await createClient(values);
-      if (!success) {
+      const { success, clientId } = await createClient(values);
+      if (!success || !clientId) {
         toast.add({
           type: "error",
           title: "Algo salió mal",
@@ -90,9 +90,9 @@ export default function FormClient(props: FormClientProps) {
         title: "Cliente creado",
         description: "Ya se encuentra en el sistema.",
       });
-      if (setOpenModalForm) {
-        setOpenModalForm(false);
-      }
+      await onClientCreated?.(clientId);
+
+      setOpenModalForm?.(false);
     }
     setIsSubmitting(false);
   };
@@ -281,11 +281,7 @@ export default function FormClient(props: FormClientProps) {
                   };
                 })}
               >
-                <SelectTrigger
-                  id="form-rhf-select-price-list"
-                  aria-invalid={fieldState.invalid}
-                  className="min-w-30"
-                >
+                <SelectTrigger id="form-rhf-select-price-list" aria-invalid={fieldState.invalid} className="min-w-30">
                   <SelectValue placeholder="Seleccionar Lista de Precios" />
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger>
@@ -299,7 +295,6 @@ export default function FormClient(props: FormClientProps) {
             </Field>
           )}
         />
-      
       </FieldGroup>
       <Dialog>
         <DialogTrigger

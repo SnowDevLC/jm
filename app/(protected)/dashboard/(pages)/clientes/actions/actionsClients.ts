@@ -11,21 +11,25 @@ export async function createClient(values: ClientFormType) {
   }
 
   try {
-    await prisma.client.create({ data: {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      cuit: data.cuit === "" ? null : data.cuit,
-      companyName: data.companyName,
-      IVAcategory: data.IVAcategory,
-      priceListId: data.priceListId === "" ? null : data.priceListId,
-    } });
+    const client = await prisma.client.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        cuit: data.cuit === "" ? null : data.cuit,
+        companyName: data.companyName,
+        IVAcategory: data.IVAcategory,
+        priceListId: data.priceListId === "" ? null : data.priceListId,
+      },
+      select: {
+        id: true,
+      },
+    });
 
     revalidatePath("/dashboard/clientes");
-    return { success: true };
+    return { success: true, clientId: client.id };
   } catch (error) {
-    console.log(error);
     return { success: false, error: "An unexpected error occurred" };
   }
 }

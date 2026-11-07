@@ -8,7 +8,7 @@ export async function getProducts(): Promise<ProductType[]> {
         isActive: true,
       },
       orderBy: {
-        SKU: "asc",
+        name: "asc",
       },
       select: {
         id: true,

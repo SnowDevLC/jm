@@ -65,6 +65,7 @@ export type FormClientProps = {
   setOpenModalForm?: Dispatch<SetStateAction<boolean>>;
   client?: ClientType;
   viewModifyButton?: boolean;
+  onClientCreated?: (clientId: string) => Promise<void> | void;
 };
 
 export const IVA_CONDITIONS_CLIENT = {

@@ -119,11 +119,38 @@ model Client {
   orders      Order[]
   devolutions Devolution[]
   payments    Payment[]
+  turns       Turn[]
 
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 
   @@map("partners")
+}
+
+enum TurnStatus {
+  PENDIENTE
+  TERMINADO
+  CANCELADO
+}
+
+model Turn {
+  id          String     @id @default(cuid())
+  startsAt    DateTime
+  endsAt    DateTime
+  status      TurnStatus @default(PENDIENTE)
+  car         String
+  description String     @default("")
+  category    String
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([startsAt])
+  @@index([clientId])
+  @@map("appointments")
 }
 
 model Brand {

@@ -6,13 +6,8 @@ import { SessionProvider } from "next-auth/react";
 import { getCategories } from "../../categorias/lib/dataCategories";
 import { getBrands } from "../../marcas/lib/dataBrands";
 
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 export async function ListProducts(props: ListProductsProps) {
   const { products, session } = props;
-  await sleep(2000);
 
   const brands = await getBrands();
   const brandsNames = Array.from(new Set(brands.map((brand: any) => brand.name)));
