@@ -285,7 +285,6 @@ export async function updateProduct(values: ProductFormType, productId: string) 
           },
           brand: { select: { name: true } },
           categories: { select: { id: true, name: true } },
-          priceListProducts: true,
         },
       });
 
